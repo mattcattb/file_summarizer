@@ -3,7 +3,7 @@ import string
 
 
 def file_to_text(file_path):
-    # convert file to a text file, and then read it in (making sure not too many tokens)
+    # convert file to a text file, and then submit the entire file as a text string
     text = ""
     with open(file_path, 'r') as file:    
         text += file.read() + " "
