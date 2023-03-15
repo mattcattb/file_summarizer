@@ -1,80 +1,69 @@
 import openai
-import os
 import argparse
+import os
+import json
 
-from file_parsing import user_file_to_string
+from src.file_summarizer import File_Summarizer
+from src.file_io import user_file_to_string
 
-args = None
-model_name = "gpt-3.5-turbo-0301"
-max_tokens = None
 
 def main():
     global args 
     args = arg_parse() #file_location and focus_question
-    
+    prepare_json(args)
+
+    #setsup filesummarizer class
+    open_api = File_Summarizer()
+
     # setup openai key
-    api_key = os.environ["OPENAI_API_KEY"]
+    try :
+        api_key = os.environ["OPENAI_API_KEY"]
+    except:
+        api_key = open_api.key
     openai.api_key = api_key
 
-    # get string of full user file
+    # get question and file contents
     full_file_contents = user_file_to_string(args.file_location)
-    # segment file into strings that fit the token max for the model being used
-    segmented_contents = tokenize_file(full_file_contents)
 
-    full_response = send_all_contents(segmented_contents)
-    print_response(full_response)
+    # get string of every api response without performing heirarchy of summarizations
+    (shallow_summaries_string, shallow_summaries_list) = open_api.summarize_string(full_file_contents)
+    
+    print_summaries(shallow_summaries_string, shallow_summaries_list, open_api)
 
-def tokenize_file(string):
-    # break string into a list where each section is a prompt within token space
-    string_chunks = []
 
-def print_response(full_response):
+
+def print_summaries(summary_string, summary_list, open_api):
     # prints out full response to terminal
     #! impliment newlines to make response more readable!
-    print(f"GPTs response to {args.focus_question}:")
-    print(full_response)
+    print(f"GPTs full response to {open_api.question}:")
+    print(summary_string)
+
+    print(f"GPT has {len(summary_list)} responses. Each one is broken down below:")
+
+    for i in range(len(summary_list)):
+        
+        print(f"\nresponse {i}:")
+        print(summary_list[i])
 
 def arg_parse():
     # arguements for python script
     parser = argparse.ArgumentParser(description="GTP3 File Summarizer")
     parser.add_argument("--file_location", type=str, dest="file_location", help="Location of file that wants to be analyzed", default="")
-    parser.add_argument("--focus_question", type=str, dest="focus_question", help="Specific question to ask before giving text promp", default="Give a summary of the files contents.")
-    # parser.add_argument("--model_type", type=str, dest="model_type", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
-    # parser.add_argument("--temp", type=int, dest="temp", help="randomness of models response", default=0.5)
+    parser.add_argument("--question_type", type=int, dest="question_type", help="Which question to ask. See README", default=0)
+    parser.add_argument("--model_name", type=str, dest="model_name", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
+    parser.add_argument("--response_size", type=int, dest="response_size", help="maximum number of works in final response. 50 to max tokensize", default=0)
+    parser.add_argument("--temp", type=int, dest="temp", help="randomness of models response. From 0 to 1", default=0.5)
+    parser.add_argument("--overlap", type=int, dest="overlap")
     return parser.parse_args()
 
-def send_all_contents(file_text):
-    # returns full response for entire file 
+def prepare_json(args):
+    # changes a json file using commandline arguements that have been parsed 
 
-    full_prompt = file_text
-    text_sent = False
+    with open('data.json', 'r') as f:
+        params = json.load(f)
 
-    full_text_response = ""
-
-    while(text_sent == False):
-        # keep sending responses until len(reponse) is less then or equal to the length of the prompt
-        full_prompt = prepare_prompt(full_prompt) # add focusquestion
-        response = get_response(full_prompt)
-        full_text_response += f"{response.choices[0].text} " # add response text to all contents
-        response_len = len(response_text)
-        prompt_len = len(full_prompt)
-        if(prompt_len <= response_len):
-            pass
-
-def get_response(prompt):
-    # returns response object from GPT model using prompt and focus_question from args in parameter
-    # messages follow the following syntag: {"role": role, "content": content}
-    # role is system, user, assistant
     
-    response = openai.ChatCompletion.create(
-    model=args.model_type,
-    messages=[
-            {"role": "system", "content": "You are a helpful file summarization bot."},
-            {"role": "user", "content": f"{args.focus_question}: {prompt}"},
-        ]
-    )
-        
-    return response
 
+    pass
 
 main()

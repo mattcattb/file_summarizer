@@ -1,0 +1,10 @@
+{
+    "question": "Give a summary of the following contents.",
+    "system_description": "You are a file summarizer.",
+    "temperature": "0.5",
+    "model_name": "gpt-3.5-turbo-0301",
+    "max_tokens": "4096",
+    "token_overlap": "200",
+    "API_key": ""
+    
+}

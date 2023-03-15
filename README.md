@@ -12,12 +12,16 @@ This code seeks to quickly summarize entire files, rather then needing to copy a
 
 ## Usage
 
-### System Requirements
-- repository was created with Linux
+### Dependencies
+- created with Linux
 - openai is used to make requests with the gpt-3.5-turbo model
 - tiktoken counts the tokens in a string, allowing them to fit within the model promps limits 
 
 ### Install
+
+First, prepare your key by going to https://platform.openai.com/account/api-keys and creating an API key. Store your API_key by going into api_params.json and adding it to the API_key 
+
+Then, input the following bash to clone github, install dependencies, and setup API key.
 - git clone https://github.com/mattcattb/GPT_file_summarizer.git
 - cd GPT_file_summarizer
 - pip install -r requirements.txt # install
@@ -28,7 +32,7 @@ This code seeks to quickly summarize entire files, rather then needing to copy a
 Place your target file into the file_input directory, OR use the --file_location and specify the location.
 if you want to use your own question, use --focus_question and type your question into focus.txt
 
-python main --file_location location --focus_question
+python main --file_location location 
 
 
 

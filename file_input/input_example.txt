@@ -1,1 +1,66 @@
 hello this is a sample! 
+
+import openai
+import argparse
+import os
+
+from file_io import user_file_to_string, get_question_string
+from openai_api import segment_string, send_prompts, response_list_to_string
+
+args = None
+model_name = "gpt-3.5-turbo-0301"
+max_tokens = 4096
+system_description = "You are a file summarizer."
+
+def main():
+    global args 
+    args = arg_parse() #file_location and focus_question
+    
+    # setup openai key
+    api_key = os.environ["OPENAI_API_KEY"]
+    openai.api_key = api_key
+
+    # get question and file contents
+    question = get_question_string()
+    full_file_contents = user_file_to_string(args.file_location)
+    
+
+    # get string of every api response without performing heirarchy of summarizations
+    # shallow_response_string = file_to_full_response(full_file_contents, question, max_tokens, model_name)
+
+    # print_response(shallow_response_string, question)
+
+
+def heirarchy_summarize():
+    # continues to summarize file contents until less then max tokens
+
+    pass
+
+def file_to_full_response(file_string, question, max_tokens, model_name):
+    # takes file_string contents, returns string of all summarizations made through API requests
+
+    # segment file into strings that fit the token max for the model being used
+    prompts = segment_string(file_string, question, system_description, max_tokens, model_name)
+    response_list = send_prompts(prompts, model_name) # list of promp objects
+    summaries_string = response_list_to_string(response_list) # string of every response object
+
+    return summaries_string
+
+def print_response(full_response, question):
+    # prints out full response to terminal
+    #! impliment newlines to make response more readable!
+    print(f"GPTs response to {question}:")
+    print(full_response)
+
+def arg_parse():
+    # arguements for python script
+    parser = argparse.ArgumentParser(description="GTP3 File Summarizer")
+    parser.add_argument("--file_location", type=str, dest="file_location", help="Location of file that wants to be analyzed", default="")
+    # parser.add_argument("--focus_question", type=bool, dest="focus_question", help="Specific question to ask before giving text promp", default="Give a summary of the files contents.")
+    # parser.add_argument("--model_type", type=str, dest="model_type", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
+    # parser.add_argument("--temp", type=int, dest="temp", help="randomness of models response", default=0.5)
+    return parser.parse_args()
+
+
+
+main()
