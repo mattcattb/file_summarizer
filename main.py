@@ -2,20 +2,31 @@ import openai
 import os
 import argparse
 
-from file_parsing import file_to_text
+from file_parsing import user_file_to_string
 
 args = None
+model_name = "gpt-3.5-turbo-0301"
+max_tokens = None
 
 def main():
     global args 
-    args = arg_parse()
-    setup_openai_key()
+    args = arg_parse() #file_location and focus_question
+    
+    # setup openai key
+    api_key = os.environ["OPENAI_API_KEY"]
+    openai.api_key = api_key
 
-    full_file_contents = get_file_string(args)
+    # get string of full user file
+    full_file_contents = user_file_to_string(args.file_location)
+    # segment file into strings that fit the token max for the model being used
+    segmented_contents = tokenize_file(full_file_contents)
 
-    full_response = send_all_contents(full_file_contents)
-
+    full_response = send_all_contents(segmented_contents)
     print_response(full_response)
+
+def tokenize_file(string):
+    # break string into a list where each section is a prompt within token space
+    string_chunks = []
 
 def print_response(full_response):
     # prints out full response to terminal
@@ -23,42 +34,14 @@ def print_response(full_response):
     print(f"GPTs response to {args.focus_question}:")
     print(full_response)
 
-def get_file_string():
-    # return files contents as string
-    global args
-    
-    if(len(args.file_location) == 0):
-        #user did not specify a filelocation, so must be using file_input directory 
-        file_path = file_path_from_dir()
-    else: 
-        file_path = args.file_location
-
-    return file_to_text(file_path)
-
 def arg_parse():
     # arguements for python script
     parser = argparse.ArgumentParser(description="GTP3 File Summarizer")
     parser.add_argument("--file_location", type=str, dest="file_location", help="Location of file that wants to be analyzed", default="")
     parser.add_argument("--focus_question", type=str, dest="focus_question", help="Specific question to ask before giving text promp", default="Give a summary of the files contents.")
-    parser.add_argument("--model_type", type=str, dest="model_type", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
-    parser.add_argument("--temp", type=int, dest="temp", help="randomness of models response", default=0.5)
-    parser.add_argument("--max_tokens", type=int, dest="max_tokens", help="max tokens sent in a prompt", default=4096)
+    # parser.add_argument("--model_type", type=str, dest="model_type", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
+    # parser.add_argument("--temp", type=int, dest="temp", help="randomness of models response", default=0.5)
     return parser.parse_args()
-
-def file_path_from_dir():
-    # returns path of file in file_input
-    workingdir = os.getcwd()
-    dir_name = "file_input"
-
-    dir_path  = os.path.join(workingdir, dir_name)
-    filename_list = os.listdir(dir_path)
-    file_path = os.path.join(dir_path, filename_list[0])
-    return file_path
-
-def setup_openai_key():
-    # setsup openai key
-    api_key = os.environ["OPENAI_API_KEY"]
-    openai.api_key = api_key
 
 def send_all_contents(file_text):
     # returns full response for entire file 
@@ -78,17 +61,12 @@ def send_all_contents(file_text):
         if(prompt_len <= response_len):
             pass
 
-
-
-def prepare_prompt(prompt):
-    # adds focus question to prompt 
-    return f"{args.focus_question} {prompt}"
-
 def get_response(prompt):
-    # returns response object from GPT model. Uses specifics from args in parameter
+    # returns response object from GPT model using prompt and focus_question from args in parameter
     # messages follow the following syntag: {"role": role, "content": content}
     # role is system, user, assistant
-    openai.ChatCompletion.create(
+    
+    response = openai.ChatCompletion.create(
     model=args.model_type,
     messages=[
             {"role": "system", "content": "You are a helpful file summarization bot."},
@@ -96,7 +74,6 @@ def get_response(prompt):
         ]
     )
         
-
     return response
 
 

@@ -1,0 +1,6 @@
+# pip install -r requirements.txt
+
+# base requirements
+python>=3.10.9
+openai
+

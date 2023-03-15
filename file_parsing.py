@@ -2,34 +2,27 @@ import os
 import string
 
 
-def file_to_text(file_path):
-    # convert file to a text file, and then submit the entire file as a text string
-    text = ""
-    with open(file_path, 'r') as file:    
-        text += file.read() + " "
-
-    return text
-
-def token_estimation(text):
-    # estimates amount of tokens in text using a token average and periods
-
-    # 4 characters per token on average?
-    tokens_per_alphachar = 1/4
-    num_punctuation = 0
-    num_alpha = 0
-    num_numbers = 0
+def user_file_to_string(file_path):
+    # return files contents as single string (no newlines) from file_path
     
-    for char in text:
-        if char in string.punctuation:
-            # . < > ( ) etc
-            num_punctuation += 1
-        elif(char.isalpha()):
-            # a b c d etc
-            num_alpha += 1
-        elif(char.isnumeric()):
-            num_numbers += 1
-        else:
-            num_alpha += 1
-        
-    total_tokens = tokens_per_alphachar *  num_alpha + num_numbers + num_punctuation
-    return total_tokens
+    text_return = ""
+    if(len(file_path) == 0):
+        # user did not specify a filelocation, so must be using file_input directory 
+        file_path = file_path_from_dir()
+
+    
+    file = open(file_path, 'r')
+    text_return += file.read()
+
+    return text_return
+
+def file_path_from_dir():
+    # returns path of file in file_input
+    
+    dir_name = "file_input"
+    workingdir = os.getcwd()
+    dir_path  = os.path.join(workingdir, dir_name)
+    filename_list = os.listdir(dir_path)
+    file_path = os.path.join(dir_path, filename_list[0])
+    
+    return file_path
