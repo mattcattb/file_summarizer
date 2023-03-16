@@ -89,8 +89,8 @@ def get_target_path(args):
     else:
         # use target dir
         path = os.getcwd()
-        target_folder_path = path + "/target_folder"
+        target_folder_path = path + "/target_folder/"
         contents = os.listdir(target_folder_path)
-        target_path = contents[0]
+        target_path = target_folder_path + contents[0]
     
     return target_path
