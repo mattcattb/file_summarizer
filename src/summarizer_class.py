@@ -25,7 +25,7 @@ class File_Summarizer:
         self.api_key = json_obj["API_key"]
         self.token_thresh = self.max_tokens - self.token_overlap - self.num_tokens(self.question) - self.num_tokens(self.system_description)   
         
-    def make_json_obj(self):
+    def __make_json_obj(self):
         # create json object from json filename
 
         current_dir = os.path.abspath(__file__)
@@ -39,54 +39,40 @@ class File_Summarizer:
         # returns string of full question content prompts for api, all within token restrictions
         encoder = self.get_encoding()
         num_string_tokens = self.num_tokens(string)
-        # num_question_tokens = self.num_tokens(string)
-        # num_sys_description_tokens = self.num_tokens(self.system_description)
-
         string_tokens = encoder.encode(string)
         
-        # chunk_size = self.max_tokens - num_question_tokens - num_sys_description_tokens self.token_overlap
         chunk_size = self.token_thresh
         segmented_string = []
         
         for i in range(0, num_string_tokens, chunk_size):
             chunk = string_tokens[i: i + chunk_size]
-            segmented_string.append(self.question + encoder.decode(chunk))
+            segmented_string.append(encoder.decode(chunk))
             
         return segmented_string
     
-    def send_prompts(self, prompt_list):
-    # sends every list to api and returns a list of each response object
-
-        response_list = []
-        # go through every prompt in prompt list, and add response to response list
-        for i in range(len(prompt_list)):
-            cur_prompt = prompt_list[i]
-            cur_response = self.get_response(cur_prompt)
-            response_list.append(cur_response)
-
-        return response_list
-    
     def num_tokens(self, string):
         # returns number of tokens in a string for a model
-    
         encoding = self.get_encoding()
         input_id = encoding.encode(string)
         num_tokens = len(input_id)
+        
         return num_tokens
     
-    def get_response(self, prompt):
+    def get_response(self, content, question):
         # returns response object from GPT model using prompt and system desctiption
         # prompt should be both the file and the question
-
+        print(f"Making a response call with {self.num_tokens(question + content + self.system_description)} tokens!")
         message = [{"role": "system", "content": self.system_description}] 
-        message.append({"role": "user", "content": prompt})
-
+        message.append({"role": "user", "content": question + content})
+        print(f"sending message of length: {len(message)}")
+        
         response = openai.ChatCompletion.create(
             model= self.model_name,
             messages=message,
             temperature=0.5
         )
-        
+
+        print("finished sending.")
         return response
 
     def get_encoding(self):
@@ -97,40 +83,21 @@ class File_Summarizer:
         except KeyError:
             encoding = tiktoken.get_encoding("cl100k_base")
         return encoding
-    
-    def recursive_summary(self, string):
-        # recursively break string into strings small enough to be sent through api
-
-        encoder = self.get_encoding()
-        str_tokens = encoder.encode(string)
-
-        tokens_len = len(str_tokens)
-
-        if(tokens_len < self.token_thresh):
-            # string under token thresh, can be sent.
-
-            response_obj = self.get_response(string)
-            text = self.response_to_string(response_obj)
-            return text
-
-        mid = tokens_len//2
-
-        left_tokens = str_tokens[:,mid]
-        right_tokens = str_tokens[mid,:]
-        left_response = self.recursive_summary(encoder.decode(left_tokens))
-        right_response = self.recursive_summary(encoder.decode(right_tokens))
-
-        return left_response + right_response
 
     def response_to_string(self, response):
         return response["choices"][0]["message"]['content'].strip()
 
-    def summarize_string(self, string):
-        # breaks string down into promps, and then returns each prompts summary 
+    def shallow_file_summary(self, file_string):
+        # breaks string down into promps, and then returns each prompts summary from initial file string 
 
-        prompts = self.segment_string(string)
-        response_list = self.send_prompts(prompts) # list of promp objects
-        
+        prompts = self.segment_string(file_string)
+        response_list = []
+        # go through every prompt in prompt list, and add response to response list
+        for i in range(len(prompts)):
+            cur_prompt = prompts[i]
+            cur_response = self.get_response(cur_prompt, self.question)
+            response_list.append(cur_response)
+
         # convert response object list to text list
         text_list = []
         for response in response_list:
@@ -141,23 +108,45 @@ class File_Summarizer:
 
         return full_summary, text_list
 
- 
-    def summarize_file(self, file_contents):
+    def deep_file_summary(self, file_contents):
         # continues to break down and make summaries until file is completely summarized
 
-        num_summaries = 1
-        (summary_string, summary_list) = self.summarize_string(file_contents)
-        print(num_summaries)
-        while(summary_list > 1):
-            # while there are multiple summaries being returned, summarize all summaries
-            (summary_string, summary_list) = self.summarize_string(summary_string)
-            num_summaries += 1
-            print(num_summaries)
+        history = {}
+        i = 0
+        (summary_string, summary_list) = self.shallow_file_summary(file_contents)
+        history[str(i)] = summary_list
+        print(f"i: {i}, summary_list is len {len(summary_list)}")
+        i += 1
 
-        return summary_string
+        while(len(summary_list) > 1):
+            
+            # while there are multiple summaries being returned, summarize all summaries
+            (summary_string, summary_list) = self.shallow_file_summary(summary_string)
+            history[str(i)] = summary_list
+            print(f"i: {i}, summary_list is len {len(summary_list)}")
+            i += 1
+
+        return summary_string, history
     
-    def summarize_summaries(self, summary_string):
-        # break down summaries until each can be sent to chatgpt to make a sumarry off of them.
-        
-        pass
+
+    def print_summaries(self, summary_string, summary_list):
+        # prints out full response to terminal
+        #! impliment newlines to make response more readable!
+
+        outfile = open("summary.txt", 'w')
+
+        text_summary = f"GPTs full response to {self.question}: \n {summary_string}"
+        print(text_summary)
+        outfile.write(text_summary)
+        list_summary = f"GPT has {len(summary_list)} responses. Each one is broken down below:"
+        print(list_summary)
+        outfile.write(list_summary)
+
+        for i in range(len(summary_list)):
+            text = f"\nresponse {i}:\n{summary_list[i]}"
+            outfile.write(text)
+            print(text)
+
+        outfile.close
+
 

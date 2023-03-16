@@ -1,0 +1,12 @@
+.pdf
+.c 
+.cpp
+.py
+.txt
+.h
+.sh
+.meta
+.html
+.xml
+.java
+.cfg

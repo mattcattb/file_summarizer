@@ -33,25 +33,41 @@ def main():
     full_file_contents = file_to_string(target_path)
 
     # get string of every api response without performing heirarchy of summarizations
-    (shallow_summaries_string, shallow_summaries_list) = open_api.summarize_string(full_file_contents)
+    (deep_summary, history) = open_api.deep_file_summary(full_file_contents)
     
-    print_summaries(shallow_summaries_string, shallow_summaries_list, open_api)
+    print_summaries(deep_summary, history, open_api)
 
 
 
-def print_summaries(summary_string, summary_list, open_api):
+def print_summaries(summary_string, history, open_api):
     # prints out full response to terminal
 
     #! impliment newlines to make response more readable!
-    print(f"GPTs full response to {open_api.question}:")
-    print(summary_string)
 
-    print(f"GPT has {len(summary_list)} responses. Each one is broken down below:")
+    outfile = open("summary.txt", 'w')
 
-    for i in range(len(summary_list)):
+    text_summary = f"GPTs full summary to {open_api.question}: \n {summary_string}"
+    print(text_summary)
+    outfile.write(text_summary)
+
+    histort_len_text = f"GPT has {len(history)} summary layers:"
+    print(histort_len_text)
+    outfile.write(histort_len_text)
+
+    for i in range(len(history)):
         
-        print(f"\nresponse {i}:")
-        print(summary_list[i])
+        layer_title = f"LAYER {i}--------------------------------------"
+        print(layer_title)
+        outfile.write
+        responses = history[str(i)]
+
+        for j, response in enumerate(responses):
+            text = f"{j}: {response}"
+            print(text)
+            outfile.write(text)
+
+
+    outfile.close
 
 def arg_parse():
     # arguements for python script
@@ -80,15 +96,5 @@ def prepare_json(args):
 
     pass
 
-def file_path_from_dir():
-    # returns path of first file in file_input
-    
-    dir_name = "target_folder"
-    parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
-
-    finput_dir_path = os.path.join(parent_dir + dir_name)
-    filename_list = os.listdir(finput_dir_path)
-    file_path = os.path.join(finput_dir_path, filename_list[0])
-    return file_path
 
 main()
