@@ -27,12 +27,17 @@ Then, input the following bash to clone github, install dependencies, and setup 
 - pip install -r requirements.txt # install
 
 
-## How to use
+## Running Script
 
-Place your target file into the file_input directory, OR use the --file_location and specify the location.
-if you want to use your own question, use --focus_question and type your question into focus.txt
+There are 2 ways to get the summary of a file/directory. Either:
+1. use the --location arguement to specify the path to the file or folder
+2. place only 1 file/folder into the target_folder directory.
 
-python main --file_location location 
+Then run
+-python multi_target.py
+
+## Commandline Arguements
+
 
 
 

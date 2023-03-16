@@ -3,9 +3,7 @@ import tiktoken
 import openai
 import os
 
-from src.file_io import user_file_to_string
-
-# stores model settings and handles communication with openais
+# this class handles gpt api calls and file summaries
 
 class File_Summarizer:
 
@@ -157,4 +155,7 @@ class File_Summarizer:
             print(num_summaries)
 
         return summary_string
-
+    
+    def summarize_summaries(self, summary_string):
+        # break down summaries until each can be sent to chatgpt to make a sumarry off of them.
+        
