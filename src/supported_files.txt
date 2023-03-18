@@ -10,3 +10,4 @@
 .xml
 .java
 .cfg
+.json

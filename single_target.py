@@ -25,7 +25,7 @@ def main():
         api_key = open_api.key
     openai.api_key = api_key
     
-    target_path = get_target_path(args)
+    target_path = get_target_path(args.target_path)
 
     print("target path: " + target_path)
 
@@ -72,7 +72,7 @@ def print_summaries(summary_string, history, open_api):
 def arg_parse():
     # arguements for python script
     parser = argparse.ArgumentParser(description="GTP3 File Summarizer")
-    parser.add_argument("--location", type=str, dest="location", help="Location of file that wants to be analyzed", default="")
+    parser.add_argument("--target_path", type=str, dest="target_path", help="path to target file to be analyzed.", default="")
     parser.add_argument("--question_type", type=int, dest="question_type", help="Which question to ask. See README and questions.txt", default=0)
     # parser.add_argument("--model_name", type=str, dest="model_name", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
     parser.add_argument("--response_size", type=int, dest="response_size", help="maximum number of works in final response. 50 to max tokensize", default=0)
@@ -92,7 +92,7 @@ def prepare_json(args):
         params = json.load(f)
 
     params["temperature"] = args.temp
-    params["location"] = args.location
+    params["location"] = args.target_path
 
     pass
 

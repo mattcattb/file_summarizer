@@ -25,7 +25,10 @@ class File_Summarizer:
         self.api_key = json_obj["API_key"]
         self.token_thresh = self.max_tokens - self.token_overlap - self.num_tokens(self.question) - self.num_tokens(self.system_description)   
         
-    def __make_json_obj(self):
+    def get_key(self):
+        return self.api_key
+
+    def make_json_obj(self):
         # create json object from json filename
 
         current_dir = os.path.abspath(__file__)

@@ -4,12 +4,12 @@ import os
 import json
 
 from src.summarizer_class import File_Summarizer
-from src.file_io import tokens_in_folder, files_in_folder, get_target_path, get_target_text, get_ftype_summary_dict
+from src.file_io import get_target_path
+from src.pathtools_class import Path_Tools
+
 '''
 This script will summarize an entire directory specified with --location, or all the contents of target_folder.
 '''
-
-
 
 def main():
     global args 
@@ -20,24 +20,14 @@ def main():
     try :
         api_key = os.environ["OPENAI_API_KEY"]
     except:
-        api_key = file_sum.key
+        api_key = file_sum.get_key()
     openai.api_key = api_key
 
-    target_path = get_target_path(args) # target directory
+    target_path = get_target_path(args.target_path) # target directory
+
+    Path_Tools.print_testing_summary(target_path)
+
     
-    print(target_path)
-    target_tokens = tokens_in_folder(target_path)
-    target_files = files_in_folder(target_path)
-
-    print(f"{target_files} files, {target_tokens} tokens")
-    print(f"it will take around {target_tokens *(1/3700)} calls")
-
-    directory_text = get_target_text(target_path) # gets the text of every file in the directory.
-    filetypes_dict = get_ftype_summary_dict(target_path)
-
-    print(f"overall len: {len(directory_text)}")
-    print(f"Directory summary:\n{filetypes_dict}")
-
 
 def print_summaries(summary_string, summary_list, open_api):
     # prints out full response to terminal
@@ -55,7 +45,7 @@ def print_summaries(summary_string, summary_list, open_api):
 def arg_parse():
     # arguements for python script
     parser = argparse.ArgumentParser(description="GTP3 File Summarizer")
-    parser.add_argument("--file_location", type=str, dest="file_location", help="Location of directory that wants to be analyzed", default="")
+    parser.add_argument("--target_path", type=str, dest="target_path", help="Path to target directory to be analzyed", default="")
     parser.add_argument("--question_type", type=int, dest="question_type", help="Which question to ask. See README and questions.txt", default=0)
     # parser.add_argument("--model_name", type=str, dest="model_name", help="engine used to make requests from", default="gpt-3.5-turbo-0301")
     parser.add_argument("--response_size", type=int, dest="response_size", help="maximum number of works in final response. 50 to max tokensize", default=0)
@@ -79,7 +69,7 @@ def prepare_json(args):
         params = json.load(f)
 
     params["temperature"] = args.temp
-    params["file_location"] = args.file_location
+    params["file_location"] = args.target_path
 
     pass
 
